@@ -41,24 +41,39 @@ if
 	[[ -n "$VPN_MY_NETWORKS" ]]
 then
 	cat > /etc/racoon/racoon.conf <<-CONF
+	  log debug;
 		path pre_shared_key "/etc/racoon/psk.txt";
+		timer {
+		  counter 5;
+		  interval 10 sec;
+		  persend 1;
+		  phase1 35 sec;
+		  phase2 20 sec;
+		}
 
 		remote $VPN_TUNNEL_ADDR {
-			exchange_mode main,aggressive;
-			nat_traversal force;
-			my_identifier address $VPN_MY_ADDR;
-			proposal {
-				authentication_method pre_shared_key;
-				hash_algorithm sha1;
-				encryption_algorithm aes 128;
-				lifetime time 28800 seconds;
-				dh_group 2;
-			}
+			exchange_mode main;
+		  nat_traversal on;
+		  my_identifier address $VPN_MY_ADDR;
+		  peers_identifier address $VPN_MY_ADDR;
+		  initial_contact on;
+		  doi ipsec_doi;
+		  proposal_check claim;
+		  generate_policy off;
+		  passive off;
+		  dpd_delay 30;
+		  proposal {
+		    authentication_method pre_shared_key;
+		    hash_algorithm sha1;
+		    encryption_algorithm aes 256;
+		    lifetime time 86400 seconds;
+		    dh_group 2;
+		  }
 		}
 
 		sainfo address $VPN_MY_NETWORKS any address $VPN_TUNNEL_NETWORKS any {
 			authentication_algorithm hmac_sha1;
-			encryption_algorithm aes 128;
+			encryption_algorithm aes 256;
 			lifetime time 3600 seconds;
 			pfs_group 2;
 			compression_algorithm deflate;
